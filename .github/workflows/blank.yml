@@ -1,0 +1,41 @@
+name: Renew Certs
+
+# Controls when the workflow will run
+on:
+  # Triggers the workflow on a timer. This particular timer runs on the first day of the month. CertBot certs are renewable every 90 days, so this should work for that purpose.
+  schedule:
+    - cron:  '0 5 */31 * *'
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  job1:
+    env:
+      # These environmental variables values are set from repository secrets. The sample script references these values for authenticating against Cloudflare and Azure
+      DOMAIN: ${{ secrets.DOMAIN }} 
+      CB_EMAIL: ${{ secrets.CB_EMAIL }} 
+      SP_CLIENT_ID: ${{ secrets.SP_CLIENT_ID }} 
+      SP_SECRET: ${{ secrets.SP_SECRET }} 
+      TENANT_ID: ${{ secrets.TENANT_ID }} 
+      FUNCTION_APP: ${{ secrets.FUNCTION_APP }} 
+      RESOURCE_GROUP: ${{ secrets.RESOURCE_GROUP }} 
+      CF_API_KEY: ${{ secrets.CF_API_KEY }} 
+      CF_EMAIL: ${{ secrets.CF_EMAIL }} 
+    name: Modifiy repository files
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2.3.2
+      - name: Run the scipt
+        working-directory: ${{env.working-directory}}
+        run: |          
+          bash certbot.sh
+      - name: Commit and push changes
+        working-directory: ${{env.working-directory}}
+        run: |
+          git config --global user.name "githubuser"
+          git config --global user.email "email@example.com"
+          git add -A
+          git commit -m "Update Certs"
+          git push
